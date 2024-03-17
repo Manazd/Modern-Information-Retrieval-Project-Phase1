@@ -55,18 +55,15 @@ class IMDbCrawler:
         Save the crawled files into json
         """
         # TODO
-        crawled_data = list(self.crawled)   
-        not_crawled_data = list(self.not_crawled)    
-        added_ids_data = list(self.added_ids)
 
         with open('IMDB_crawled.json', 'w') as f:
-            json.dump(crawled_data, f, indent=2)
+            json.dump(self.crawled, f, indent=2)
         
         with open('IMDB_not_crawled.json', 'w') as f:
-            json.dump(not_crawled_data, f, indent=2)
+            json.dump(self.not_crawled, f, indent=2)
         
         with open('IMDB_added_ids.json', 'w') as f:
-            json.dump(added_ids_data, f, indent=2)
+            json.dump(self.added_ids, f, indent=2)
 
     def read_from_file_as_json(self):
         """
@@ -171,7 +168,7 @@ class IMDbCrawler:
                 URL = self.get_the_next_URL()
                 if URL:
                     futures.append(executor.submit(self.crawl_page_info, URL))
-                    self.not_crawled.remove(URL)
+                    # self.not_crawled.remove(URL)
                     crawled_counter += 1
                     
                 else:
@@ -250,12 +247,11 @@ class IMDbCrawler:
 
         # Save the new crawled page as a crawled one
         self.crawled.append(movie)
-
-        # Add related links to crawl more movies
-        self.not_crawled.append(related_links)
+        self.not_crawled.remove(URL)
 
         # Add related links ids to the added_ids
         for link in related_links:
+            self.not_crawled.append(link)
             id = self.get_id_from_URL(link)
             self.added_ids.append(id)
 
