@@ -57,13 +57,13 @@ class IMDbCrawler:
         # TODO
 
         with open('IMDB_crawled.json', 'w') as f:
-            json.dump(self.crawled, f, indent=2)
-        
+            json.dump(list(self.crawled), f, indent=2)
+
         with open('IMDB_not_crawled.json', 'w') as f:
-            json.dump(self.not_crawled, f, indent=2)
+            json.dump(list(self.not_crawled), f, indent=2)
         
         with open('IMDB_added_ids.json', 'w') as f:
-            json.dump(self.added_ids, f, indent=2)
+            json.dump(list(self.added_ids), f, indent=2)
 
     def read_from_file_as_json(self):
         """
@@ -113,8 +113,8 @@ class IMDbCrawler:
         for i, movie in enumerate(movies):
             id = movie['node']['id']
             link = 'https://www.imdb.com/title/' + str(id)
-            self.added_ids(id)
-            self.not_crawled.append(link)
+            self.added_ids.add(id)
+            self.not_crawled.add(link)
 
     def get_imdb_instance(self):
         return {
@@ -246,14 +246,14 @@ class IMDbCrawler:
         movie['reviews'] = self.get_reviews_with_scores(review_soup)
 
         # Save the new crawled page as a crawled one
-        self.crawled.append(movie)
+        self.crawled.add(movie)
         self.not_crawled.remove(URL)
 
         # Add related links ids to the added_ids
         for link in related_links:
-            self.not_crawled.append(link)
+            self.not_crawled.add(link)
             id = self.get_id_from_URL(link)
-            self.added_ids.append(id)
+            self.added_ids.add(id)
 
     def get_summary_link(url):
         """
