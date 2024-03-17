@@ -16,7 +16,7 @@ class IMDbCrawler:
     }
     top_250_URL = 'https://www.imdb.com/chart/top/'
 
-    def __init__(self, crawling_threshold=1000):
+    def __init__(self, crawling_threshold=20):
         """
         Initialize the crawler
 
@@ -28,7 +28,7 @@ class IMDbCrawler:
         # TODO
         self.crawling_threshold = crawling_threshold
         self.not_crawled = set()
-        self.crawled = set()
+        self.crawled = []
         self.added_ids = set()
         self.add_list_lock = Lock()
         self.add_queue_lock = Lock()
@@ -209,15 +209,13 @@ class IMDbCrawler:
             The URL of the site
         """
         # TODO
-        
         # Summary
-        summary_url = self.get_summary_url(URL)
+        summary_url = self.get_summary_link(URL)
         summary_soup = BeautifulSoup(self.crawl(summary_url).text, "html.parser")
 
         # Review 
-        review_url = self.get_summary_url(URL)
+        review_url = self.get_summary_link(URL)
         review_soup = BeautifulSoup(self.crawl(review_url).text, "html.parser")
-
         # MPAA
         mpaa_url = URL + 'parentalguide'
         mpaa_soup = BeautifulSoup(self.crawl(mpaa_url).text, "html.parser")
@@ -225,7 +223,7 @@ class IMDbCrawler:
         # Get the ID
         movie_id = self.get_id_from_URL(URL)
         related_links = self.get_related_links(res)
-
+  
         movie['id'] = movie_id
         movie['title'] = self.get_title(res)
         movie['first_page_summary'] = self.get_first_page_summary(res)
@@ -246,7 +244,7 @@ class IMDbCrawler:
         movie['reviews'] = self.get_reviews_with_scores(review_soup)
 
         # Save the new crawled page as a crawled one
-        self.crawled.add(movie)
+        self.crawled.append(movie)
         self.not_crawled.remove(URL)
 
         # Add related links ids to the added_ids
@@ -255,7 +253,7 @@ class IMDbCrawler:
             id = self.get_id_from_URL(link)
             self.added_ids.add(id)
 
-    def get_summary_link(url):
+    def get_summary_link(self, url):
         """
         Get the link to the summary page of the movie
         Example:
@@ -277,7 +275,7 @@ class IMDbCrawler:
         except:
             print("failed to get summary link")
 
-    def get_review_link(url):
+    def get_review_link(self, url):
         """
         Get the link to the review page of the movie
         Example:
@@ -290,7 +288,7 @@ class IMDbCrawler:
         except:
             print("failed to get review link")
 
-    def get_title(soup):
+    def get_title(self, soup):
         """
         Get the title of the movie from the soup
 
@@ -310,7 +308,7 @@ class IMDbCrawler:
         except:
             print("failed to get title")
 
-    def get_first_page_summary(soup):
+    def get_first_page_summary(self, soup):
         """
         Get the first page summary of the movie from the soup
 
@@ -331,7 +329,7 @@ class IMDbCrawler:
         except:
             print("failed to get first page summary")
 
-    def get_director(soup):
+    def get_director(self, soup):
         """
         Get the directors of the movie from the soup
 
@@ -361,7 +359,7 @@ class IMDbCrawler:
         except:
             print("failed to get director")
 
-    def get_stars(soup):
+    def get_stars(self, soup):
         """
         Get the stars of the movie from the soup
 
@@ -388,7 +386,7 @@ class IMDbCrawler:
         except:
             print("failed to get stars")
 
-    def get_writers(soup):
+    def get_writers(self, soup):
         """
         Get the writers of the movie from the soup
 
@@ -417,7 +415,7 @@ class IMDbCrawler:
         except:
             print("failed to get writers")
 
-    def get_related_links(soup):
+    def get_related_links(self, soup):
         """
         Get the related links of the movie from the More like this section of the page from the soup
 
@@ -446,7 +444,7 @@ class IMDbCrawler:
         except:
             print("failed to get related links")
 
-    def get_summary(soup):
+    def get_summary(self, soup):
         """
         Get the summary of the movie from the soup
 
@@ -478,7 +476,7 @@ class IMDbCrawler:
         except:
             print("failed to get summary")
 
-    def get_synopsis(soup):
+    def get_synopsis(self, soup):
         """
         Get the synopsis of the movie from the soup
 
@@ -494,18 +492,18 @@ class IMDbCrawler:
         try:
             tag = soup.find('script', {'id': '__NEXT_DATA__'})
             json_data = json.loads(tag.contents[0])
-            summaries_list = json_data['props']['pageProps']['contentData']['categories'][1]['section']['items']
+            synopsis_list = json_data['props']['pageProps']['contentData']['categories'][1]['section']['items']
+            synopsis = []
 
-            summaries = []
-
-            for summary in summaries_list:
-                text = summary['htmlContent']
-                summaries.append(text)
-            return summaries
+            for syn in synopsis_list:
+                text_list = syn['htmlContent'].split("<br/><br/>")
+                for i in range(len(text_list)):
+                    synopsis.append(text_list[i])
+            return synopsis
         except:
             print("failed to get synopsis")
 
-    def get_reviews_with_scores(soup):
+    def get_reviews_with_scores(self, soup):
         """
         Get the reviews of the movie from the soup
         reviews structure: [[review,score]]
@@ -542,7 +540,7 @@ class IMDbCrawler:
         except:
             print("failed to get reviews")
 
-    def get_genres(soup):
+    def get_genres(self, soup):
         """
         Get the genres of the movie from the soup
 
@@ -568,7 +566,7 @@ class IMDbCrawler:
         except:
             print("Failed to get generes")
 
-    def get_rating(soup):
+    def get_rating(self, soup):
         """
         Get the rating of the movie from the soup
 
@@ -589,7 +587,7 @@ class IMDbCrawler:
         except:
             print("failed to get rating")
 
-    def get_mpaa(soup):
+    def get_mpaa(self, soup):
         """
         Get the MPAA of the movie from the soup
 
@@ -609,7 +607,7 @@ class IMDbCrawler:
         except:
             print("failed to get mpaa")
 
-    def get_release_year(soup):
+    def get_release_year(self, soup):
         """
         Get the release year of the movie from the soup
 
@@ -630,7 +628,7 @@ class IMDbCrawler:
         except:
             print("failed to get release year")
 
-    def get_languages(soup):
+    def get_languages(self, soup):
         """
         Get the languages of the movie from the soup
 
@@ -657,7 +655,7 @@ class IMDbCrawler:
             print("failed to get languages")
             return None
 
-    def get_countries_of_origin(soup):
+    def get_countries_of_origin(self, soup):
         """
         Get the countries of origin of the movie from the soup
 
@@ -683,7 +681,7 @@ class IMDbCrawler:
         except:
             print("failed to get countries of origin")
 
-    def get_budget(soup):
+    def get_budget(self, soup):
         #TODO currency needed or not???
 
         """
@@ -708,7 +706,7 @@ class IMDbCrawler:
         except:
             print("failed to get budget")
 
-    def get_gross_worldwide(soup):
+    def get_gross_worldwide(self, soup):
         """
         Get the gross worldwide of the movie from box office section of the soup
 
@@ -731,7 +729,7 @@ class IMDbCrawler:
 
 
 def main():
-    imdb_crawler = IMDbCrawler(crawling_threshold=600)
+    imdb_crawler = IMDbCrawler(crawling_threshold=20)
     # imdb_crawler.read_from_file_as_json()
     imdb_crawler.start_crawling()
     imdb_crawler.write_to_file_as_json()
