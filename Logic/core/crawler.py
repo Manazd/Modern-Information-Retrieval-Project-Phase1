@@ -6,7 +6,6 @@ from threading import Lock
 import json
 
 
-
 class IMDbCrawler:
     """
     put your own user agent in the headers
