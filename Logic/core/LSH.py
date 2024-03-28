@@ -18,6 +18,10 @@ class MinHashLSH:
         self.documents = documents
         self.num_hashes = num_hashes
 
+        # TODO
+        # newwwwwwwwwwwwwww
+        self.shingled_documents = self.shingle_documents()
+
     def shingle_document(self, document, k=2):
         """
         Convert a document into a set of shingles.
@@ -34,8 +38,25 @@ class MinHashLSH:
         set
             A set of shingles.
         """
-        shingles = None
+        # TODO set?
+        shingles = set()
+
+        chars = [char for char in document]
+
+        for i in range(len(chars) - k + 1):
+            shingle = ''.join(chars[i : i + k])
+            shingles.add(shingle)
         return shingles
+
+    # TODO
+    # New function appended !!!!!!!!!!!!!!!!
+    def shingle_documents(self):
+        k = 2
+        shingled_documents = []
+        for doc in self.documents:
+            shingles = self.shingle_document(doc, k)
+            shingled_documents.append(shingles)
+        return shingled_documents
 
     def build_characteristic_matrix(self):
         """

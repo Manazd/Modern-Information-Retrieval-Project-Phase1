@@ -1,4 +1,6 @@
-
+from nltk.stem import PorterStemmer
+from nltk.stem import WordNetLemmatizer
+from nltk.tokenize import word_tokenize
 
 class Preprocessor:
 
@@ -13,7 +15,8 @@ class Preprocessor:
         """
         # TODO
         self.documents = documents
-        self.stopwords = []
+        with open('stopwords.txt', 'r') as file:
+            self.stopwords = set(word.strip() for word in file)
 
     def preprocess(self):
         """
@@ -25,7 +28,14 @@ class Preprocessor:
             The preprocessed documents.
         """
          # TODO
-        return
+        preprocessed_doc = []
+        for document in self.documents:
+            preprocessed_1 = self.normalize(document)
+            preprocessed_2 = self.remove_links(preprocessed_1)
+            preprocessed_3 = self.remove_punctuations(preprocessed_2)
+            preprocessed_4 = self.remove_stopwords(preprocessed_3)
+            preprocessed_doc.append(preprocessed_4)
+        return preprocessed_doc
 
     def normalize(self, text: str):
         """
@@ -42,7 +52,18 @@ class Preprocessor:
             The normalized text.
         """
         # TODO
-        return
+        lower_text = text.lower()
+        
+        # Apply stemming
+        stemmer = PorterStemmer()
+        normalized_text = ' '.join(stemmer.stem(word) for word in lower_text.split())
+
+        # # Apply lemmatization
+        # tokenized = word_tokenize(lower_text)
+        # lemmatizer = WordNetLemmatizer()
+        # normalized_text = ' '.join(lemmatizer.lemmatize(token) for token in tokenized)
+
+        return normalized_text
 
     def remove_links(self, text: str):
         """
