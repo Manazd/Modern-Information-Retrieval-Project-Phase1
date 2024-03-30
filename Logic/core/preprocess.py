@@ -1,6 +1,7 @@
 from nltk.stem import PorterStemmer
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
+import re
 
 class Preprocessor:
 
@@ -27,7 +28,7 @@ class Preprocessor:
         List[str]
             The preprocessed documents.
         """
-         # TODO
+        # TODO
         preprocessed_doc = []
         for document in self.documents:
             preprocessed_1 = self.normalize(document)
@@ -53,7 +54,6 @@ class Preprocessor:
         """
         # TODO
         lower_text = text.lower()
-        
         # Apply stemming
         stemmer = PorterStemmer()
         normalized_text = ' '.join(stemmer.stem(word) for word in lower_text.split())
@@ -81,7 +81,10 @@ class Preprocessor:
         """
         patterns = [r'\S*http\S*', r'\S*www\S*', r'\S+\.ir\S*', r'\S+\.com\S*', r'\S+\.org\S*', r'\S*@\S*']
         # TODO
-        return
+        # Adds whitespace instead of the link
+        for ptr in patterns:
+            text = re.sub(ptr, '', text)
+        return text
 
     def remove_punctuations(self, text: str):
         """
@@ -98,7 +101,10 @@ class Preprocessor:
             The text with punctuations removed.
         """
         # TODO
-        return
+        # Pattern for non-space, non-word (underscores, digits, or letters) characters
+        pattern = r'[^\w\s]'
+        new_text = re.sub(pattern, '', text)
+        return new_text
 
     def tokenize(self, text: str):
         """
@@ -115,7 +121,10 @@ class Preprocessor:
             The list of words.
         """
         # TODO
-        return
+        # Pattern to get a word in the text
+        pattern = r'\b\w+\b'
+        list_of_words = re.findall(pattern, text)
+        return list_of_words
 
     def remove_stopwords(self, text: str):
         """
@@ -132,5 +141,12 @@ class Preprocessor:
             The list of words with stopwords removed.
         """
         # TODO
-        return
+        words = text.split()
+        final_words = []
+
+        for word in words:
+            lower_word = word.lower()
+            if lower_word not in self.stopwords:
+                final_words.append(word)
+        return final_words
 
