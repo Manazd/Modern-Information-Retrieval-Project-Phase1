@@ -53,15 +53,29 @@ class Preprocessor:
             The normalized text.
         """
         # TODO
+        # Stemming
         lower_text = text.lower()
-        # Apply stemming
+        processed_words = []
         stemmer = PorterStemmer()
-        normalized_text = ' '.join(stemmer.stem(word) for word in lower_text.split())
+        text_words = lower_text.split()
 
-        # # Apply lemmatization
-        # tokenized = word_tokenize(lower_text)
+        # Stem each word
+        for word in text_words:
+            new_word = stemmer.stem(word)
+            processed_words.append(new_word)
+        normalized_text = ' '.join(processed_words)
+
+        # # Lemmatization
+        # lower_text = text.lower()
+        # processed_words = []
+        # tokens = word_tokenize(lower_text)
         # lemmatizer = WordNetLemmatizer()
-        # normalized_text = ' '.join(lemmatizer.lemmatize(token) for token in tokenized)
+
+        # for token in tokens:
+        #     lem = lemmatizer.lemmatize(token)
+        #     processed_words.append(lem)
+
+        # normalized_text = ' '.join(processed_words)
 
         return normalized_text
 

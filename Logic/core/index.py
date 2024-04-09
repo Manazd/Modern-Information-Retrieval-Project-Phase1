@@ -39,8 +39,10 @@ class Index:
         """
 
         current_index = {}
-        #         TODO
 
+        for doc in self.preprocessed_documents:
+            doc_id = doc['id']
+            current_index[doc_id] = doc
         return current_index
 
     def index_stars(self):
@@ -54,8 +56,18 @@ class Index:
             So the index type is: {term: {document_id: tf}}
         """
 
-        #         TODO
-        pass
+        current_index = {}
+
+        for doc in self.preprocessed_documents:
+            if 'stars' in doc:
+                for star in doc['stars']:
+                    if star not in current_index:
+                        current_index[star] = {}
+                    if doc['id'] in current_index[star]:
+                        current_index[star][doc['id']] += 1
+                    else:
+                        current_index[star][doc['id']] = 1
+        return current_index
 
     def index_genres(self):
         """
@@ -68,8 +80,18 @@ class Index:
             So the index type is: {term: {document_id: tf}}
         """
 
-        #         TODO
-        pass
+        current_index = {}
+
+        for document in self.preprocessed_documents:
+            if 'genres' in document:
+                for genre in document['genres']:
+                    if genre not in current_index:
+                        current_index[genre] = {}
+                    if document['id'] in current_index[genre]:
+                        current_index[genre][document['id']] += 1
+                    else:
+                        current_index[genre][document['id']] = 1
+        return current_index
 
     def index_summaries(self):
         """
@@ -83,8 +105,18 @@ class Index:
         """
 
         current_index = {}
-        #         TODO
 
+        for doc in self.preprocessed_documents:
+            if 'summaries' in doc:
+                for summary in doc['summaries']:
+                    words = summary.split()
+                    for word in words:
+                        if word not in current_index:
+                            current_index[word] = {}
+                        if doc['id'] in current_index[word]:
+                            current_index[word][doc['id']] += 1
+                        else:
+                            current_index[word][doc['id']] = 1
         return current_index
 
     def get_posting_list(self, word: str, index_type: str):
@@ -105,9 +137,8 @@ class Index:
         """
 
         try:
-            #         TODO
-            pass
-        except:
+            return list(self.index[index_type][word].keys())
+        except KeyError:
             return []
 
     def add_document_to_index(self, document: dict):
@@ -120,9 +151,36 @@ class Index:
             Document to add to all the indexes
         """
 
-        #         TODO
-        pass
+        doc_id = document['id']
+        # Set doc index
+        self.index[Indexes.DOCUMENTS.value][doc_id] = document
 
+        # Set stars and genres indexes if available
+        stars_index = Indexes.STARS.value
+        genres_index = Indexes.GENRES.value
+        for index_type in [stars_index, genres_index]:
+            if index_type in document:
+                for term in document[index_type]:
+                    if term not in self.index[index_type]:
+                        self.index[index_type][term] = {}
+                    if doc_id in self.index[index_type][term]:
+                        self.index[index_type][term][doc_id] += 1
+                    else:
+                        self.index[index_type][term][doc_id] = 1
+        
+        # Set summaries index
+        sum_index_type = Indexes.SUMMARIES.value
+        if sum_index_type in document:
+            for summary in document[sum_index_type]:
+                words = summary.split()
+                for word in words:
+                    if word not in self.index[sum_index_type]:
+                        self.index[sum_index_type][word] = {}
+                    if doc_id in self.index[sum_index_type][word]:
+                        self.index[sum_index_type][word][doc_id] += 1
+                    else:
+                        self.index[sum_index_type][word][doc_id] = 1
+        
     def remove_document_from_index(self, document_id: str):
         """
         Remove a document from all the indexes
@@ -132,9 +190,15 @@ class Index:
         document_id : str
             ID of the document to remove from all the indexes
         """
-
-        #         TODO
-        pass
+        doc_index = Indexes.DOCUMENTS.value
+        if document_id in self.index[doc_index]:
+            self.index[doc_index].pop(document_id)
+            
+        for index_type in [Indexes.STARS.value, Indexes.GENRES.value, Indexes.SUMMARIES.value]:
+            terms = list(self.index[index_type].keys())
+            for term in terms:
+                if document_id in self.index[index_type][term]:
+                    self.index[index_type][term].pop(document_id)
 
     def check_add_remove_is_correct(self):
         """
