@@ -1,7 +1,9 @@
+import os
+import re
+import json
 from nltk.stem import PorterStemmer
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
-import re
 
 class Preprocessor:
 
@@ -15,8 +17,10 @@ class Preprocessor:
             The list of documents to be preprocessed, path to stop words, or other parameters.
         """
         # TODO
-        self.documents = documents
-        with open('stopwords.txt', 'r') as file:
+        self.documents = documents        
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        stopwords_path = os.path.join(script_dir, "stopwords.txt")
+        with open(stopwords_path, "r") as file:
             self.stopwords = set(word.strip() for word in file)
 
     def preprocess(self):

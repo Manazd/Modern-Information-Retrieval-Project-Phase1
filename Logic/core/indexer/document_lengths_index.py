@@ -3,7 +3,7 @@ from indexes_enum import Indexes,Index_types
 from index_reader import Index_reader
 
 class DocumentLengthsIndex:
-    def __init__(self,path='index/'):
+    def __init__(self,path='indexes/'):
         """
         Initializes the DocumentLengthsIndex class.
 
@@ -11,7 +11,6 @@ class DocumentLengthsIndex:
         ----------
         path : str
             The path to the directory where the indexes are stored.
-
         """
 
         self.documents_index = Index_reader(path, index_name=Indexes.DOCUMENTS).index
@@ -39,8 +38,10 @@ class DocumentLengthsIndex:
             A dictionary of the document lengths. The keys are the document IDs, and the values are
             the document's length in that field (where).
         """
-
-        # TODO:
+        doc_length = {}
+        for doc_id, data in self.documents_index.items():
+            doc_length[doc_id] = len(data[where])
+        return doc_length
     
     def store_document_lengths_index(self, path , index_name):
         """

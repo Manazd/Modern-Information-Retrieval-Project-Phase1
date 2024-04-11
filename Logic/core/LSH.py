@@ -20,7 +20,7 @@ class MinHashLSH:
 
         # TODO
         # newwwwwwwwwwwwwww
-        self.shingled_documents = self.shingle_documents()
+        # self.shingled_documents = self.shingle_documents()
 
     def shingle_document(self, document, k=2):
         """
@@ -39,6 +39,8 @@ class MinHashLSH:
             A set of shingles.
         """
         # TODO set?
+        # TODO spaces?
+        document = document.lower()
         shingles = set()
 
         chars = [char for char in document]
@@ -47,16 +49,6 @@ class MinHashLSH:
             shingle = ''.join(chars[i : i + k])
             shingles.add(shingle)
         return shingles
-
-    # TODO
-    # New function appended !!!!!!!!!!!!!!!!
-    def shingle_documents(self):
-        k = 2
-        shingled_documents = []
-        for doc in self.documents:
-            shingles = self.shingle_document(doc, k)
-            shingled_documents.append(shingles)
-        return shingled_documents
 
     def build_characteristic_matrix(self):
         """
@@ -67,8 +59,30 @@ class MinHashLSH:
         numpy.ndarray
             The binary characteristic matrix.
         """
-        # TODO
-        return
+        all_shingles = set()
+        all_docs = self.documents
+        docs_shingles = []
+
+        for document in all_docs:
+            shingles = self.shingle_document(document)
+            docs_shingles.append(list(shingles))
+            all_shingles.update(shingles)
+        
+        doc_num = len(all_docs)
+        shingle_num = len(all_shingles)
+        characteristic_matrix = np.zeros((doc_num, shingle_num), dtype=int)
+        
+        shingles_index = {}
+        for idx, shingle in enumerate(all_shingles):
+            shingles_index[shingle] = idx
+        
+        for doc_idx in range(len(all_docs)):
+            # shingles = self.shingle_document(document)
+            shingles = docs_shingles[doc_idx]
+            for shingle in shingles:
+                characteristic_matrix[doc_idx, shingles_index[shingle]] = 1
+        
+        return characteristic_matrix
 
     def min_hash_signature(self):
         """
@@ -79,8 +93,20 @@ class MinHashLSH:
         numpy.ndarray
             The Min-Hash signatures matrix.
         """
-        # TODO
-        return
+        characteristic_matrix = self.build_characteristic_matrix()
+        doc_num, shingle_num = characteristic_matrix.shape
+        signature_matrix = np.full((self.num_hashes, doc_num), np.inf)
+        
+        permutations = [np.random.permutation(shingle_num) for _ in range(self.num_hashes)]
+        for permutation_idx, permutation in enumerate(permutations):
+            for doc_idx in range(doc_num):
+                for i in range(shingle_num):
+                    idx = np.where(permutation == i)[0][0]
+                    if characteristic_matrix[doc_idx, idx] == 1: 
+                        signature_matrix[permutation_idx, doc_idx] = i  
+                        break
+        
+        return signature_matrix
 
     def lsh_buckets(self, signature, bands=10, rows_per_band=10):
         """
@@ -101,7 +127,31 @@ class MinHashLSH:
             A dictionary mapping bucket IDs to lists of document indices.
         """
         # TODO
-        return
+        _, num_docs = signature.shape
+        
+        buckets = {}
+        
+        for band_idx in range(bands):
+            band_start = band_idx * rows_per_band
+            band_end = (band_idx + 1) * rows_per_band
+            band_hashes = signature[band_start:band_end, :]  # Get the band from the signature matrix
+            
+            # Hash the band portion of each column to a hash table with k buckets
+            hash_table = {}
+            for doc_idx in range(num_docs):
+                band_hash = hash(tuple(band_hashes[:, doc_idx]))
+                if band_hash in hash_table:
+                    hash_table[band_hash].append(doc_idx)
+                else:
+                    hash_table[band_hash] = [doc_idx]
+            
+            # Make k as large as possible
+            for bucket_id, docs in hash_table.items():
+                if bucket_id not in buckets:
+                    buckets[bucket_id] = []
+                buckets[bucket_id].extend(docs)
+        # print(buckets)
+        return buckets
 
     def perform_lsh(self):
         """
