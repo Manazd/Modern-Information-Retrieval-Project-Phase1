@@ -47,7 +47,7 @@ class DocumentLengthsIndex:
         """
         Stores the document lengths index to a file.
 
-        Parameters
+        Parameterst
         ----------
         path : str
             The path to the directory where the indexes are stored.

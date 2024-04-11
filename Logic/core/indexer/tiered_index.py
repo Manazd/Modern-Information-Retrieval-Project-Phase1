@@ -91,4 +91,3 @@ if __name__ == "__main__":
     tiered = Tiered_index(
         path="indexes/"
     )
-    # tiered.convert_to_tiered_index(2, 3)
