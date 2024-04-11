@@ -3,7 +3,7 @@ from indexes_enum import Indexes, Index_types
 import json
 
 class Metadata_index:
-    def __init__(self, path='index/'):
+    def __init__(self, path='indexes/'):
         """
         Initializes the Metadata_index.
 
@@ -12,8 +12,10 @@ class Metadata_index:
         path : str
             The path to the indexes.
         """
-        
-        #TODO
+        self.documents_index = Index_reader(path, index_name=Indexes.DOCUMENTS).index
+        self.documents = self.read_documents()
+        self.metadata_index = self.create_metadata_index()
+        self.store_metadata_index(path)
 
     def read_documents(self):
         """
@@ -21,7 +23,9 @@ class Metadata_index:
         
         """
 
-        #TODO
+        keys = self.documents_index.keys()
+        return keys
+
 
     def create_metadata_index(self):    
         """
@@ -47,7 +51,12 @@ class Metadata_index:
             The field to get the document lengths for.
         """
 
-        #TODO
+        length = 0
+        num_docs = len(self.documents)
+        for doc_id in self.documents:
+            length += len(self.documents_index[doc_id][where])
+        avg_len = length / num_docs
+        return avg_len
 
     def store_metadata_index(self, path):
         """
