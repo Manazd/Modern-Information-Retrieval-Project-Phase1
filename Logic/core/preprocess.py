@@ -1,7 +1,9 @@
+import os
+import re
+import json
 from nltk.stem import PorterStemmer
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
-import re
 
 class Preprocessor:
 
@@ -15,8 +17,10 @@ class Preprocessor:
             The list of documents to be preprocessed, path to stop words, or other parameters.
         """
         # TODO
-        self.documents = documents
-        with open('stopwords.txt', 'r') as file:
+        self.documents = documents        
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        stopwords_path = os.path.join(script_dir, "stopwords.txt")
+        with open(stopwords_path, "r") as file:
             self.stopwords = set(word.strip() for word in file)
 
     def preprocess(self):
@@ -53,19 +57,16 @@ class Preprocessor:
             The normalized text.
         """
         # TODO
-        # Stemming
         lower_text = text.lower()
         processed_words = []
         stemmer = PorterStemmer()
         text_words = lower_text.split()
 
-        # Stem each word
         for word in text_words:
             new_word = stemmer.stem(word)
             processed_words.append(new_word)
         normalized_text = ' '.join(processed_words)
 
-        # # Lemmatization
         # lower_text = text.lower()
         # processed_words = []
         # tokens = word_tokenize(lower_text)
@@ -95,7 +96,6 @@ class Preprocessor:
         """
         patterns = [r'\S*http\S*', r'\S*www\S*', r'\S+\.ir\S*', r'\S+\.com\S*', r'\S+\.org\S*', r'\S*@\S*']
         # TODO
-        # Adds whitespace instead of the link
         for ptr in patterns:
             text = re.sub(ptr, '', text)
         return text
@@ -115,7 +115,6 @@ class Preprocessor:
             The text with punctuations removed.
         """
         # TODO
-        # Pattern for non-space, non-word (underscores, digits, or letters) characters
         pattern = r'[^\w\s]'
         new_text = re.sub(pattern, '', text)
         return new_text
@@ -135,7 +134,6 @@ class Preprocessor:
             The list of words.
         """
         # TODO
-        # Pattern to get a word in the text
         pattern = r'\b\w+\b'
         list_of_words = re.findall(pattern, text)
         return list_of_words

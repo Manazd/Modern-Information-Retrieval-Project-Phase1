@@ -1,8 +1,14 @@
+from collections import defaultdict
 import time
 import os
+import sys
 import json
 import copy
 from indexes_enum import Indexes
+curr_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(curr_dir)
+sys.path.append(parent_dir)
+from preprocess import Preprocessor
 
 
 class Index:
@@ -32,8 +38,9 @@ class Index:
         """
 
         current_index = {}
-        #         TODO
-
+        for document in self.preprocessed_documents:
+            doc_id = document['id']
+            current_index[doc_id] = document
         return current_index
 
     def index_stars(self):
@@ -46,9 +53,14 @@ class Index:
             The index of the documents based on the stars. You should also store each terms' tf in each document.
             So the index type is: {term: {document_id: tf}}
         """
-
-        #         TODO
-        pass
+        current_index = defaultdict(dict)
+        for document in self.preprocessed_documents:
+            for star in document['stars']:
+                if document['id'] in current_index[star]:
+                    current_index[star][document['id']] += 1
+                else:
+                    current_index[star][document['id']] = 1
+        return current_index
 
     def index_genres(self):
         """
@@ -60,9 +72,14 @@ class Index:
             The index of the documents based on the genres. You should also store each terms' tf in each document.
             So the index type is: {term: {document_id: tf}}
         """
-
-        #         TODO
-        pass
+        current_index = defaultdict(dict)
+        for document in self.preprocessed_documents:
+            for genre in document['genres']:
+                if document['id'] in current_index[genre]:
+                    current_index[genre][document['id']] += 1
+                else:
+                    current_index[genre][document['id']] = 1
+        return current_index
 
     def index_summaries(self):
         """
@@ -74,10 +91,14 @@ class Index:
             The index of the documents based on the summaries. You should also store each terms' tf in each document.
             So the index type is: {term: {document_id: tf}}
         """
-
-        current_index = {}
-        #         TODO
-
+    
+        current_index = defaultdict(dict)
+        for document in self.preprocessed_documents:
+            for summary in document['summaries']:
+                if document['id'] in current_index[summary]:
+                    current_index[summary][document['id']] += 1
+                else:
+                    current_index[summary][document['id']] = 1
         return current_index
 
     def get_posting_list(self, word: str, index_type: str):
@@ -98,9 +119,8 @@ class Index:
         """
 
         try:
-            #         TODO
-            pass
-        except:
+            return list(self.index[index_type][word].keys())
+        except KeyError:
             return []
 
     def add_document_to_index(self, document: dict):
@@ -113,9 +133,31 @@ class Index:
             Document to add to all the indexes
         """
 
-        #         TODO
-        pass
+        doc_id = document['id']
+        self.index[Indexes.DOCUMENTS.value][doc_id] = document
 
+        for index_type in ["stars", "genres"]:
+            if index_type in document:
+                for term in document[index_type]:
+                    if term not in self.index[index_type]:
+                        self.index[index_type][term] = {}
+                    if doc_id in self.index[index_type][term]:
+                        self.index[index_type][term][doc_id] += 1
+                    else:
+                        self.index[index_type][term][doc_id] = 1
+        
+        sum_index_type = Indexes.SUMMARIES.value
+        if sum_index_type in document:
+            for summary in document[sum_index_type]:
+                words = summary.split()
+                for word in words:
+                    if word not in self.index[sum_index_type]:
+                        self.index[sum_index_type][word] = {}
+                    if doc_id in self.index[sum_index_type][word]:
+                        self.index[sum_index_type][word][doc_id] += 1
+                    else:
+                        self.index[sum_index_type][word][doc_id] = 1
+        
     def remove_document_from_index(self, document_id: str):
         """
         Remove a document from all the indexes
@@ -125,10 +167,16 @@ class Index:
         document_id : str
             ID of the document to remove from all the indexes
         """
-
-        #         TODO
-        pass
-
+        doc_index = Indexes.DOCUMENTS.value
+        if document_id in self.index[doc_index]:
+            self.index[doc_index].pop(document_id)
+            
+        for index_type in [Indexes.STARS.value, Indexes.GENRES.value, Indexes.SUMMARIES.value]:
+            terms = list(self.index[index_type].keys())
+            for term in terms:
+                if document_id in self.index[index_type][term]:
+                    self.index[index_type][term].pop(document_id)
+        
     def check_add_remove_is_correct(self):
         """
         Check if the add and remove is correct
@@ -183,7 +231,7 @@ class Index:
         else:
             print('Remove is incorrect')
 
-    def store_index(self, path: str, index_type: str = None):
+    def store_index(self, path: str, index_name: str = None):
         """
         Stores the index in a file (such as a JSON file)
 
@@ -191,23 +239,18 @@ class Index:
         ----------
         path : str
             Path to store the file
-        index_type: str or None
-            type of index we want to store (documents, stars, genres, summaries)
-            if None store tiered index
+        index_name: str
+            name of index we want to store (documents, stars, genres, summaries)
         """
 
         if not os.path.exists(path):
             os.makedirs(path)
 
-        if index_type is None:
-            # TODO
-            pass
-
-        if index_type not in self.index:
+        if index_name not in self.index:
             raise ValueError('Invalid index type')
 
-        #         TODO
-        pass
+        with open(os.path.join(path, f"{index_name}.json"), "w") as f:
+            json.dump(self.index[index_name], f)
 
     def load_index(self, path: str):
         """
@@ -218,10 +261,12 @@ class Index:
         path : str
             Path to load the file
         """
-
-        #         TODO
-        pass
-
+        for index_name in Indexes:
+            file_path = os.path.join(path, f'{index_name.value}_index.json')
+            if os.path.exists(file_path):
+                with open(file_path, "r") as f:
+                    self.index[index_name.value] = json.load(f)
+        return  
     def check_if_index_loaded_correctly(self, index_type: str, loaded_index: dict):
         """
         Check if the index is loaded correctly
@@ -303,3 +348,60 @@ class Index:
             return False
 
 # TODO: Run the class with needed parameters, then run check methods and finally report the results of check methods
+
+file_path = os.path.abspath("./IMDB_crawled.json")
+with open(file_path, "r") as f:
+    imdb_data = json.load(f)
+
+ids_list = []
+stars_list = []
+genres_list = []
+summareis_list = []
+for movie in imdb_data:
+    if (movie['stars'] != 'No stars') and (movie['genres'] != 'No generes') and (movie['summaries'] != 'No summary'):
+        ids_list.append(movie['id'])
+        stars_list.append(' '.join(movie['stars']))
+        genres_list.append(' '.join(movie['genres']))
+        summareis_list.append(' '.join(movie['summaries']))
+
+pre2 = Preprocessor(stars_list)
+preprocessed_stars = pre2.preprocess()
+pre3 = Preprocessor(genres_list)
+preprocessed_genres = pre3.preprocess()
+pre1 = Preprocessor(summareis_list)
+preprocessed_summaries = pre1.preprocess()
+
+pre_docs = []
+num_movies = len(ids_list)
+for i in range(num_movies):
+    movie = {
+        'id':ids_list[i],
+        'stars':preprocessed_stars[i],
+        'genres':preprocessed_genres[i],
+        'summaries':preprocessed_summaries[i]
+    }
+    pre_docs.append(movie)
+
+index = Index(preprocessed_documents=pre_docs)
+
+index.check_add_remove_is_correct()
+
+index.check_if_indexing_is_good('stars', 'Henry')
+index.check_if_indexing_is_good('genres', 'drama')
+index.check_if_indexing_is_good('summaries', 'good')
+
+index.store_index('indexes', 'documents')
+index.store_index('indexes', 'stars')
+index.store_index('indexes', 'genres')
+index.store_index('indexes', 'summaries')
+
+
+doc_stat = index.check_if_index_loaded_correctly('documents', index.index['documents'])
+stars_stat = index.check_if_index_loaded_correctly('stars', index.index['stars'])
+genres_stat = index.check_if_index_loaded_correctly('genres', index.index['genres'])
+summaries_stat = index.check_if_index_loaded_correctly('summaries', index.index['summaries'])
+
+print(f'documents loaded: {doc_stat}')
+print(f'stars loaded: {stars_stat}')
+print(f'genres loaded: {genres_stat}')
+print(f'summaries loaded: {summaries_stat}')

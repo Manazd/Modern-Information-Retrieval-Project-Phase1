@@ -33,7 +33,7 @@ class Index_reader:
         if self.index_type != None:
             absolute_path = absolute_path + "_" + self.index_type.value
 
-        absolute_path = absolute_path + "_index.json"
+        absolute_path = absolute_path + ".json"
         
         with open(absolute_path, 'r') as file:
             return json.load(file)
