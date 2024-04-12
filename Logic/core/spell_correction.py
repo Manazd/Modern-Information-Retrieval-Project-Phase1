@@ -131,7 +131,6 @@ class SpellCorrection:
         str
             Correct form of the query.
         """
-        # TODO Convert the query to lowercase ????????????
         final_result = ""
         words = query.split()
         
