@@ -1,3 +1,5 @@
+import json
+import os
 import numpy as np
 import itertools
 import random
@@ -18,10 +20,6 @@ class MinHashLSH:
         self.documents = documents
         self.num_hashes = num_hashes
 
-        # TODO
-        # newwwwwwwwwwwwwww
-        # self.shingled_documents = self.shingle_documents()
-
     def shingle_document(self, document, k=2):
         """
         Convert a document into a set of shingles.
@@ -38,8 +36,6 @@ class MinHashLSH:
         set
             A set of shingles.
         """
-        # TODO set?
-        # TODO spaces?
         document = document.lower()
         shingles = set()
 
@@ -77,7 +73,6 @@ class MinHashLSH:
             shingles_index[shingle] = idx
         
         for doc_idx in range(len(all_docs)):
-            # shingles = self.shingle_document(document)
             shingles = docs_shingles[doc_idx]
             for shingle in shingles:
                 characteristic_matrix[doc_idx, shingles_index[shingle]] = 1
@@ -126,7 +121,6 @@ class MinHashLSH:
         dict
             A dictionary mapping bucket IDs to lists of document indices.
         """
-        # TODO
         _, num_docs = signature.shape
         
         buckets = {}
@@ -134,23 +128,21 @@ class MinHashLSH:
         for band_idx in range(bands):
             band_start = band_idx * rows_per_band
             band_end = (band_idx + 1) * rows_per_band
-            band_hashes = signature[band_start:band_end, :]  # Get the band from the signature matrix
+            band_parts = signature[band_start:band_end, :]
             
-            # Hash the band portion of each column to a hash table with k buckets
             hash_table = {}
             for doc_idx in range(num_docs):
-                band_hash = hash(tuple(band_hashes[:, doc_idx]))
+                band_hash = hash(tuple(band_parts[:, doc_idx]))
                 if band_hash in hash_table:
                     hash_table[band_hash].append(doc_idx)
                 else:
                     hash_table[band_hash] = [doc_idx]
             
-            # Make k as large as possible
             for bucket_id, docs in hash_table.items():
                 if bucket_id not in buckets:
                     buckets[bucket_id] = []
                 buckets[bucket_id].extend(docs)
-        # print(buckets)
+        
         return buckets
 
     def perform_lsh(self):
@@ -162,8 +154,9 @@ class MinHashLSH:
         dict
             A dictionary mapping bucket IDs to lists of document indices.
         """
-        # TODO
-        return
+        signature = self.min_hash_signature()
+        buckets = self.lsh_buckets(signature)
+        return buckets
 
     def jaccard_score(self, first_set, second_set):
         """
@@ -181,8 +174,11 @@ class MinHashLSH:
         float
             Jaccard score.
         """
-        # TODO
-        pass
+        intersection = len(first_set.intersection(second_set))
+        union = len(first_set.union(second_set))
+        if union != 0:
+            return intersection / union
+        return 0
 
     def jaccard_similarity_test(self, buckets, all_documents):
         """
@@ -231,3 +227,33 @@ class MinHashLSH:
 
         # a good score is around 0.8
         print("your final score in near duplicate detection:", correct_near_duplicates / all_near_duplicates)
+
+script_dir = os.path.dirname(os.path.abspath(__file__))
+fake_path = os.path.join(script_dir, "LSHFakeData.json")
+with open(fake_path, "r") as file:
+    fake_data = json.load(file)
+
+file_path = os.path.abspath("./IMDB_crawled.json")
+with open(file_path, "r") as f:
+    real_data = json.load(f)
+
+fake = [' '.join(movie['summaries']) for movie in fake_data]
+real = [' '.join(movie['summaries']) for movie in real_data if movie['summaries'] and movie['summaries'] != 'No summary']
+
+all_data = fake + real
+
+min_hash = MinHashLSH(all_data, num_hashes=100)
+buckets = min_hash.perform_lsh()
+print(f"Number of buckets : {len(buckets)}")
+
+min_hash.jaccard_similarity_test(buckets, all_data)
+
+# min_hash = MinHashLSH(fake, num_hashes=100)
+# buckets = min_hash.perform_lsh()
+# print(f"Number of buckets : {len(buckets)}")
+# min_hash.jaccard_similarity_test(buckets, fake)
+# *****************************************************
+# min_hash = MinHashLSH(real, num_hashes=100)
+# buckets = min_hash.perform_lsh()
+# print(f"Number of buckets : {len(buckets)}")
+# min_hash.jaccard_similarity_test(buckets, real)

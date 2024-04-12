@@ -194,22 +194,17 @@ class IMDbCrawler:
             The URL of the site
         """
         # TODO
-        # Summary
         summary_url = self.get_summary_link(URL)
         summary_soup = BeautifulSoup(self.crawl(summary_url).text, "html.parser")
 
-        # Review 
         review_url = self.get_review_link(URL)
         review_soup = BeautifulSoup(self.crawl(review_url).text, "html.parser")
-        # MPAA
         mpaa_url = URL + 'parentalguide'
         mpaa_soup = BeautifulSoup(self.crawl(mpaa_url).text, "html.parser")
 
-        # Get the ID
         movie_id = self.get_id_from_URL(URL)
         related_links = self.get_related_links(res)
 
-        # Add related links ids to the added_ids
         for link in related_links:
             id = self.get_id_from_URL(link)
             if id not in self.added_ids:            
@@ -237,7 +232,6 @@ class IMDbCrawler:
         movie['synopsis'] = self.get_synopsis(summary_soup)
         movie['reviews'] = self.get_reviews_with_scores(review_soup)
 
-        # Save the new crawled page as a crawled one
         with self.add_queue_lock:
           self.crawled.append(movie)
 
@@ -514,7 +508,6 @@ class IMDbCrawler:
             The reviews of the movie
         """
         try:
-            # get the ratings
             rating_tags = soup.find_all('span', class_='rating-other-user-rating')
 
             ratings = []
@@ -523,7 +516,6 @@ class IMDbCrawler:
                 rating = rate.find('span').text
                 ratings.append(rating)
 
-            # get the reviews
             reviews_list = soup.find_all('div', class_='lister-item mode-detail imdb-user-review collapsable')
 
             results_list = []
@@ -608,7 +600,6 @@ class IMDbCrawler:
             # doc = soup.find('tr', class_="ipl-zebra-list__item")
             # mpaa = doc.find_all('td')[1].text
 
-            # Get mpaa from the main page
             tag = res.find('script', {'id': '__NEXT_DATA__'})
             json_data = json.loads(tag.contents[0])
             mpaa = json_data['props']['pageProps']['aboveTheFoldData']['certificate']['rating']
@@ -696,7 +687,6 @@ class IMDbCrawler:
             return res
 
     def get_budget(self, soup):
-        #TODO currency needed or not???
 
         """
         Get the budget of the movie from box office section of the soup
