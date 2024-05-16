@@ -9,6 +9,7 @@ curr_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(curr_dir)
 sys.path.append(parent_dir)
 from preprocess import Preprocessor
+from .indexes_enum import Indexes
 
 
 class Index:
